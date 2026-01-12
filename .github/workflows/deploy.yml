@@ -1,0 +1,44 @@
+name: Deploy Blog
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout blog repo
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
+          bundler-cache: true
+
+      - name: Build Jekyll
+        run: bundle exec jekyll build
+
+      - name: Checkout root Pages repo
+        uses: actions/checkout@v4
+        with:
+          repository: LMaster765/LMaster765.github.io
+          token: ${{ secrets.PAGES_DEPLOY_TOKEN }}
+          path: pages
+
+      - name: Deploy to /blog
+        run: |
+          rm -rf pages/blog
+          mkdir -p pages/blog
+          cp -r _site/* pages/blog/
+
+      - name: Commit and push
+        run: |
+          cd pages
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add blog
+          git commit -m "Deploy blog"
+          git push
